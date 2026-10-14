@@ -31,6 +31,8 @@ ISSUE_FIELDS = (
     "updated_at",
     "closed_at",
     "close_reason",
+    "parent",
+    "dependencies",
 )
 
 

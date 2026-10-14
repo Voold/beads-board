@@ -15,6 +15,9 @@
     .top { height: 62px; display: flex; align-items: center; gap: 17px; padding: 0 22px; border-bottom: 1px solid #2a2e36; background: #171a20; }
     .logo { font-size: 19px; font-weight: 760; letter-spacing: -.6px; }
     .tag { color: #9299a7; font-size: 12px; }
+    .view-tabs { display: flex; gap: 3px; padding: 3px; border: 1px solid #343a44; border-radius: 9px; background: #1e222a; }
+    .view-tab { border: 0; border-radius: 6px; background: transparent; color: #9da7b6; padding: 7px 11px; font-size: 12px; font-weight: 650; }
+    .view-tab.active { background: #354257; color: #e5edff; }
     .top-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
     .sync { color: #9aa2af; font-size: 12px; text-align: right; }
     .sync.warning { color: #d9b978; }
@@ -84,6 +87,27 @@
     .empty { padding: 23px 12px; color: #8993a2; font-size: 12px; line-height: 1.5; }
     .more { width: 100%; border: 1px solid #3c4552; border-radius: 7px; background: #252b34; color: #afc2df; padding: 10px; font-size: 11px; font-weight: 650; margin-top: 8px; }
     .more:hover { background: #303947; }
+    .board.tree-view { display: block; }
+    .tree-intro { color: #929baa; font-size: 12px; line-height: 1.5; margin: 0 0 17px; }
+    .tree-epic { max-width: 940px; margin-bottom: 15px; border: 1px solid #464052; border-left: 3px solid #ae8bd7; border-radius: 10px; background: #211f29; padding: 15px 17px; }
+    .tree-epic-head { display: flex; align-items: center; gap: 9px; margin-bottom: 13px; }
+    .tree-epic-head .tree-issue { font-size: 14px; font-weight: 700; }
+    .tree-list { margin: 0; padding: 0 0 0 17px; border-left: 1px solid #414957; }
+    .tree-list.root { padding-left: 0; border: 0; }
+    .tree-item { list-style: none; margin: 7px 0; }
+    .tree-row { display: flex; align-items: center; gap: 7px; border: 1px solid #363d48; border-radius: 8px; background: #242932; padding: 8px 10px; }
+    .tree-issue { flex: 1; min-width: 0; border: 0; background: transparent; color: #dfe5ed; text-align: left; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+    .tree-issue:hover { color: #c5d8ff; }
+    .tree-id { color: #a8bee8; font-weight: 720; margin-right: 7px; }
+    .tree-state { flex: 0 0 auto; color: #a9b3c1; font-size: 10px; }
+    .tree-state.closed { color: #9cccae; }
+    .tree-toggle { border: 1px solid #485366; border-radius: 5px; background: #303846; color: #c7d5e9; min-width: 24px; height: 24px; font-size: 14px; line-height: 1; }
+    .tree-deps { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 7px 0 3px 12px; color: #aeb9c8; font-size: 10px; }
+    .tree-dep { border: 1px solid #685940; border-radius: 5px; background: #382f25; color: #ead0a0; padding: 4px 6px; font-size: 10px; }
+    .tree-dep.done { border-color: #42624d; background: #283b30; color: #a7d7b6; }
+    .tree-dep:hover { filter: brightness(1.15); }
+    .tree-children { margin: 0 0 0 15px; }
+    .tree-empty { max-width: 940px; }
     .backdrop { position: fixed; inset: 0; background: #07090ca8; display: none; z-index: 10; }
     .backdrop.show { display: block; }
     .drawer { position: fixed; top: 0; right: 0; height: 100vh; width: min(440px, 100vw); overflow: auto; background: #1b1f26; border-left: 1px solid #3b414c; padding: 23px 25px; box-shadow: -12px 0 45px #0006; z-index: 11; display: none; }
@@ -107,17 +131,17 @@
     .source-warning { color: #e3c58a; border: 1px solid #6b5838; border-radius: 8px; background: #30291d; padding: 10px; font-size: 11px; line-height: 1.5; margin-top: 16px; overflow-wrap: anywhere; }
     .toast { position: fixed; right: 20px; bottom: 20px; padding: 10px 14px; border-radius: 8px; color: #fff; background: #415b86; font-size: 12px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
     .toast.show { opacity: 1; }
-    @media (max-width: 760px) { .top { padding: 0 14px; gap: 8px; } .tag { display: none; } .sync { max-width: 145px; } .layout { display: block; height: auto; } .projects { display: flex; padding: 7px; overflow-x: auto; border-right: 0; border-bottom: 1px solid #2a2e36; } .projects .eyebrow { display: none; } .project { min-width: 145px; width: auto; } .main { min-height: calc(100vh - 110px); } .toolbar { display: block; padding: 18px 16px 14px; } .controls { margin: 15px 0 0; justify-content: space-between; } .search { width: 55vw; } .board { padding: 14px; } .column { flex: 0 0 290px; min-width: 290px; } }
+    @media (max-width: 760px) { .top { min-height: 62px; height: auto; flex-wrap: wrap; padding: 9px 14px; gap: 8px; } .tag { display: none; } .view-tabs { order: 3; width: 100%; } .view-tab { flex: 1; } .sync { max-width: 145px; } .layout { display: block; height: auto; } .projects { display: flex; padding: 7px; overflow-x: auto; border-right: 0; border-bottom: 1px solid #2a2e36; } .projects .eyebrow { display: none; } .project { min-width: 145px; width: auto; } .main { min-height: calc(100vh - 110px); } .toolbar { display: block; padding: 18px 16px 14px; } .controls { margin: 15px 0 0; justify-content: space-between; } .search { width: 55vw; } .board { padding: 14px; } .column { flex: 0 0 290px; min-width: 290px; } .tree-epic { padding: 11px; } .tree-children { margin-left: 8px; } .tree-list { padding-left: 9px; } }
   </style>
 </head>
 <body>
-  <header class="top"><div class="logo">Beads</div><div class="tag">Локальная доска задач</div><div class="top-right"><div class="sync" id="sync">Загружаю…</div><button class="refresh" id="refresh" type="button">Обновить</button></div></header>
+  <header class="top"><div class="logo">Beads</div><div class="tag">Локальная доска задач</div><nav class="view-tabs" aria-label="Режим просмотра"><button class="view-tab active" data-view="board" type="button" aria-current="page">Доска</button><button class="view-tab" data-view="tree" type="button">Дерево эпиков</button></nav><div class="top-right"><div class="sync" id="sync">Загружаю…</div><button class="refresh" id="refresh" type="button">Обновить</button></div></header>
   <div class="layout">
     <aside class="projects" id="projects" aria-label="Проекты"></aside>
     <main class="main"><div class="toolbar"><div><h1 id="title">Все проекты</h1><p class="summary" id="summary">Загружаю задачи</p><div class="legend"><span class="epic-mark">◆ Эпик</span><span class="parent-mark">▣ Родительская задача</span><span class="task-mark">□ Задача · ↳ Подзадача</span></div></div><div class="controls"><input class="search" id="search" type="search" placeholder="Поиск по задачам" aria-label="Поиск по задачам"></div></div><div class="board" id="board"><div class="empty">Читаю проекты Beads…</div></div></main>
   </div>
   <div class="backdrop" id="backdrop"></div><aside class="drawer" id="drawer" aria-label="Подробности задачи"></aside><div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script id="snapshot-data" type="application/json">{"fetched_at":"2026-10-14T12:00:00Z","projects":[{"slug":"demo","root":"Демо проект","prefix":"DEMO","source":"demo","updated_at":"2026-10-14T12:00:00Z","error":"Это вымышленные задачи. Для своих задач запусти start.command.","issues":[{"id":"DEMO-1","title":"Запустить проект","description":"Пример эпика с подзадачами.","acceptance_criteria":"Открыть локальную доску.","status":"in_progress","priority":2,"issue_type":"epic","assignee":null,"updated_at":"2026-10-14T12:00:00Z","closed_at":null,"close_reason":null},{"id":"DEMO-1.1","title":"Подготовить окружение","description":"Проверить Python 3 и Beads CLI.","acceptance_criteria":null,"status":"closed","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-13T10:00:00Z","closed_at":"2026-10-13T10:00:00Z","close_reason":"Окружение готово."},{"id":"DEMO-1.2","title":"Открыть доску","description":"Запустить start.command или python3 server.py.","acceptance_criteria":null,"status":"in_progress","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-14T11:00:00Z","closed_at":null,"close_reason":null},{"id":"DEMO-2","title":"Проверить команды","description":"Кнопки копируют промпты и не изменяют Beads.","acceptance_criteria":null,"status":"open","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-12T09:00:00Z","closed_at":null,"close_reason":null},{"id":"DEMO-3","title":"Изучить закрытые задачи","description":"Пример завершённой задачи.","acceptance_criteria":null,"status":"closed","priority":3,"issue_type":"task","assignee":null,"updated_at":"2026-10-11T18:00:00Z","closed_at":"2026-10-11T18:00:00Z","close_reason":"Пример результата."}]}]}</script>
+  <script id="snapshot-data" type="application/json">{"fetched_at":"2026-10-14T12:00:00Z","projects":[{"slug":"demo","root":"Демо проект","prefix":"DEMO","source":"demo","updated_at":"2026-10-14T12:00:00Z","error":"Это вымышленные задачи. Для своих задач запусти start.command.","issues":[{"id":"DEMO-1","title":"Запустить проект","description":"Пример эпика с подзадачами.","acceptance_criteria":"Открыть локальную доску.","status":"in_progress","priority":2,"issue_type":"epic","assignee":null,"updated_at":"2026-10-14T12:00:00Z","closed_at":null,"close_reason":null,"parent":null,"dependencies":[]},{"id":"DEMO-1.1","title":"Подготовить окружение","description":"Проверить Python 3 и Beads CLI.","acceptance_criteria":null,"status":"closed","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-13T10:00:00Z","closed_at":"2026-10-13T10:00:00Z","close_reason":"Окружение готово.","parent":"DEMO-1","dependencies":[{"issue_id":"DEMO-1.1","depends_on_id":"DEMO-1","type":"parent-child"}]},{"id":"DEMO-1.2","title":"Открыть доску","description":"Запустить start.command или python3 server.py.","acceptance_criteria":null,"status":"in_progress","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-14T11:00:00Z","closed_at":null,"close_reason":null,"parent":"DEMO-1","dependencies":[{"issue_id":"DEMO-1.2","depends_on_id":"DEMO-1","type":"parent-child"},{"issue_id":"DEMO-1.2","depends_on_id":"DEMO-1.1","type":"blocks"},{"issue_id":"DEMO-1.2","depends_on_id":"DEMO-2","type":"blocks"}]},{"id":"DEMO-2","title":"Проверить команды","description":"Кнопки копируют промпты и не изменяют Beads.","acceptance_criteria":null,"status":"open","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-12T09:00:00Z","closed_at":null,"close_reason":null,"parent":null,"dependencies":[]},{"id":"DEMO-3","title":"Изучить закрытые задачи","description":"Пример завершённой задачи.","acceptance_criteria":null,"status":"closed","priority":3,"issue_type":"task","assignee":null,"updated_at":"2026-10-11T18:00:00Z","closed_at":"2026-10-11T18:00:00Z","close_reason":"Пример результата.","parent":null,"dependencies":[]},{"id":"DEMO-1.2.1","title":"Проверить живые данные","description":"Пример вложенной подзадачи.","acceptance_criteria":null,"status":"open","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-14T10:30:00Z","closed_at":null,"close_reason":null,"parent":"DEMO-1.2","dependencies":[{"issue_id":"DEMO-1.2.1","depends_on_id":"DEMO-1.2","type":"parent-child"}]}]}]}</script>
   <script>
     const $ = id => document.getElementById(id);
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]);
@@ -125,7 +149,7 @@
     const statusNames = {open:'Открыта',in_progress:'В работе',blocked:'Заблокирована',deferred:'Отложена',closed:'Закрыта'};
     const typeNames = {epic:'Эпик',feature:'Фича',bug:'Баг',task:'Задача',decision:'Решение'};
     const columns = [{key:'open',title:'Открытые'},{key:'in_progress',title:'В работе'},{key:'paused',title:'Пауза'},{key:'closed',title:'Закрытые'}];
-    const state = {projects:[],issues:[],byKey:new Map(),project:'all',selected:null,loading:false,columnLimits:{open:200,in_progress:200,paused:200,closed:200}};
+    const state = {projects:[],issues:[],byKey:new Map(),project:'all',view:'board',treeCollapsed:new Set(),selected:null,loading:false,columnLimits:{open:200,in_progress:200,paused:200,closed:200}};
     const issueKey = issue => `${issue.project.slug}:${issue.id}`;
     const rootId = id => id.split('.')[0];
     const localDay = value => {const d=new Date(value);return Number.isNaN(d.getTime()) ? 'unknown' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
@@ -185,12 +209,64 @@
       const content=[...days.entries()].map(([day,items]) => `<section class="day"><div class="day-head">${escapeHtml(dayLabel(day))}</div>${items.map(group => group.members.length>1 || group.root?.issue_type === 'epic' || group.visible[0].id.includes('.') ? epicCard(group) : taskCard(group.visible[0])).join('')}</section>`).join('');
       return `<section class="column ${column.key}" data-column="${column.key}"><div class="column-head"><span class="status-dot"></span>${column.title}<span class="column-count">${matched.length}</span></div><div class="column-body">${content || '<div class="empty">Пока пусто</div>'}${matched.length>visible.length ? `<button class="more" data-more="${column.key}" type="button">Показать ещё ${Math.min(200,matched.length-visible.length)} · осталось ${matched.length-visible.length}</button>` : ''}</div></section>`;
     }
+    function parentOf(issue) {
+      const relation=(issue.dependencies || []).find(dep => dep.type === 'parent-child' && dep.issue_id === issue.id);
+      return issue.parent || relation?.depends_on_id || (issue.id.includes('.') ? issue.id.slice(0,issue.id.lastIndexOf('.')) : null);
+    }
+    function renderTree() {
+      const query=$('search').value.trim().toLocaleLowerCase('ru-RU');
+      const issues=state.issues.filter(issue => state.project==='all' || issue.project.slug===state.project);
+      const issueMap=new Map(issues.map(issue => [issueKey(issue),issue]));
+      const children=new Map();
+      for (const issue of issues) {
+        const parent=parentOf(issue), key=`${issue.project.slug}:${parent}`;
+        if (!parent || !issueMap.has(key) || key===issueKey(issue)) continue;
+        if (!children.has(key)) children.set(key,[]);
+        children.get(key).push(issue);
+      }
+      for (const items of children.values()) items.sort((a,b) => Number(a.status==='closed')-Number(b.status==='closed') || (b.updated_at || '').localeCompare(a.updated_at || ''));
+      const matches=issue => [issue.id,issue.title,issue.project.slug].some(value => String(value || '').toLocaleLowerCase('ru-RU').includes(query));
+      function branch(issue,ancestry=new Set()) {
+        const key=issueKey(issue);
+        if (ancestry.has(key)) return {html:'',visible:false};
+        const next=new Set(ancestry);next.add(key);
+        const descendants=(children.get(key) || []).map(child => branch(child,next));
+        const visible=!query || matches(issue) || descendants.some(child => child.visible);
+        if (!visible) return {html:'',visible:false};
+        const childHtml=descendants.map(child => child.html).join('');
+        const collapsed=!query && state.treeCollapsed.has(key);
+        const blockers=(issue.dependencies || []).filter(dep => dep.type==='blocks' && dep.issue_id===issue.id);
+        const deps=blockers.length ? `<div class="tree-deps"><span>Зависит от</span>${blockers.map(dep => {
+          const target=state.byKey.get(`${issue.project.slug}:${dep.depends_on_id}`) || state.issues.find(item => item.id===dep.depends_on_id);
+          const label=target ? `${target.id} · ${target.title}` : dep.depends_on_id;
+          return `<button class="tree-dep ${target?.status==='closed' ? 'done' : ''}" ${target ? `data-key="${escapeHtml(issueKey(target))}"` : 'disabled'} title="${escapeHtml(label)}" type="button">${escapeHtml(label)}${target?.status==='closed' ? ' ✓' : ''}</button>`;
+        }).join('')}</div>` : '';
+        const toggle=childHtml ? `<button class="tree-toggle" data-toggle="${escapeHtml(key)}" type="button" aria-label="${collapsed ? 'Развернуть' : 'Свернуть'} подзадачи ${escapeHtml(issue.id)}" aria-expanded="${!collapsed}">${collapsed ? '+' : '−'}</button>` : '';
+        return {visible:true,html:`<li class="tree-item"><div class="tree-row">${toggle}<button class="tree-issue" data-key="${escapeHtml(key)}" type="button"><span class="tree-id">${escapeHtml(issue.id)}</span>${escapeHtml(issue.title)}</button><span class="tree-state ${issue.status==='closed' ? 'closed' : ''}">${escapeHtml(statusNames[issue.status] || issue.status)}</span></div>${deps}${childHtml ? `<div class="tree-children" ${collapsed ? 'hidden' : ''}><ul class="tree-list">${childHtml}</ul></div>` : ''}</li>`};
+      }
+      const epics=issues.filter(issue => issue.issue_type==='epic').sort((a,b) => (b.updated_at || '').localeCompare(a.updated_at || ''));
+      const cards=epics.map(epic => {
+        const result=branch(epic);
+        return result.visible ? `<section class="tree-epic"><div class="tree-epic-head"><span class="type-badge epic">◆ Эпик</span><span class="task-project">${escapeHtml(epic.project.slug)}</span></div><ul class="tree-list root">${result.html}</ul></section>` : '';
+      }).join('');
+      return `<p class="tree-intro">Вложенность показывает связи «родитель → подзадача». Метка «Зависит от» показывает блокирующие задачи; зелёная метка означает, что блокер закрыт.</p>${cards || '<div class="empty tree-empty">Эпиков по текущему фильтру нет.</div>'}`;
+    }
     function render() {
       const project=state.projects.find(item => item.slug === state.project), groups=boardGroups(), board=$('board');
-      const scrollLeft=board.scrollLeft, columnScrolls=new Map([...board.querySelectorAll('[data-column]')].map(column => [column.dataset.column,column.querySelector('.column-body').scrollTop]));
+      const scrollLeft=board.scrollLeft, scrollTop=board.scrollTop, columnScrolls=new Map([...board.querySelectorAll('[data-column]')].map(column => [column.dataset.column,column.querySelector('.column-body').scrollTop]));
       $('title').textContent=project ? project.slug : 'Все проекты';
-      $('summary').textContent=project ? project.root : `${state.projects.length} проектов из ~/beads · задачи по дате последнего обновления`;
+      $('summary').textContent=project ? project.root : state.view==='tree' ? `${state.projects.length} проектов из ~/beads · вложенность и блокирующие зависимости` : `${state.projects.length} проектов из ~/beads · задачи по дате последнего обновления`;
       renderProjects();
+      document.querySelectorAll('[data-view]').forEach(button => {const active=button.dataset.view===state.view;button.classList.toggle('active',active);if (active) button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
+      board.classList.toggle('tree-view',state.view==='tree');
+      if (state.view==='tree') {
+        board.innerHTML=renderTree();
+        board.scrollLeft=0;
+        board.scrollTop=scrollTop;
+        board.querySelectorAll('[data-key]').forEach(button => button.addEventListener('click', () => openDrawer(button.dataset.key)));
+        board.querySelectorAll('[data-toggle]').forEach(button => button.addEventListener('click', () => {const key=button.dataset.toggle;if (state.treeCollapsed.has(key)) state.treeCollapsed.delete(key);else state.treeCollapsed.add(key);render();}));
+        return;
+      }
       board.innerHTML=columns.map(column => renderColumn(column,groups)).join('');
       board.scrollLeft=scrollLeft;
       board.querySelectorAll('[data-column]').forEach(column => {column.querySelector('.column-body').scrollTop=columnScrolls.get(column.dataset.column) || 0;});
@@ -249,6 +325,7 @@
       } finally {state.loading=false;$('refresh').disabled=false;}
     }
     $('refresh').addEventListener('click',refresh);
+    document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => {state.view=button.dataset.view;render();}));
     $('search').addEventListener('input',render);
     $('backdrop').addEventListener('click',closeDrawer);
     document.addEventListener('keydown',event => {if (event.key==='Escape') closeDrawer();});
