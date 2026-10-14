@@ -80,11 +80,12 @@ def read_live(project_dir, beads_dir=None):
         cwd=project_dir,
         env=env,
         capture_output=True,
-        text=True,
         timeout=20,
         check=True,
     )
-    issues = json.loads(result.stdout)
+    # Read bytes first: Windows pipe-reader threads otherwise use the local code page.
+    # Decode JSON here so invalid UTF-8 becomes a normal per-project read error.
+    issues = json.loads(result.stdout.decode("utf-8-sig"))
     if not isinstance(issues, list):
         raise ValueError("Beads вернул неожиданный формат")
     return [normalize_issue(issue) for issue in issues]

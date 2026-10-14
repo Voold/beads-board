@@ -124,11 +124,12 @@
     .graph-viewport.panning { cursor: grabbing; }
     .graph-stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
     .graph-links { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
-    .graph-link.parent-child { stroke: #6b81a3; stroke-width: 1.7; }
-    .graph-link.blocks { stroke: #d2a96b; stroke-width: 2; }
+    .graph-link { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .graph-link.parent-child { stroke: #8faad1; stroke-width: 1.8; }
+    .graph-link.blocks { stroke: #d2a96b; stroke-width: 2; stroke-dasharray: 7 4; }
     .graph-link.supersedes { stroke: #7699a1; stroke-width: 1.7; stroke-dasharray: 5 5; }
     .graph-link.dim { opacity: .13; }
-    .graph-node { position: absolute; width: 158px; min-height: 54px; border: 1px solid #637995; border-radius: 10px; background: #283443; color: #e5ebf4; padding: 8px 10px; cursor: grab; touch-action: none; user-select: none; box-shadow: 0 5px 17px #0004; }
+    .graph-node { position: absolute; width: 240px; height: 112px; border: 1px solid #637995; border-radius: 10px; background: #283443; color: #e5ebf4; padding: 10px 12px; cursor: grab; touch-action: none; user-select: none; box-shadow: 0 5px 17px #0004; }
     .graph-node:active { cursor: grabbing; }
     .graph-node.graph-epic { border-color: #ad89d4; background: #392d48; box-shadow: 0 0 17px #ae8bd72c; }
     .graph-node.closed { border-color: #50705b; background: #26372e; }
@@ -137,7 +138,20 @@
     .graph-node:focus-visible { outline: 2px solid #c7d9ff; outline-offset: 3px; }
     .graph-node-id { font-size: 10px; font-weight: 740; color: #b9cbed; }
     .graph-node.graph-epic .graph-node-id { color: #e1c6ff; }
-    .graph-node-title { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-top: 3px; font-size: 11px; font-weight: 600; }
+    .graph-node-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; margin-top: 6px; font-size: 13px; line-height: 18px; height: 36px; font-weight: 600; }
+    .graph-node-head, .graph-node-meta { display: flex; align-items: center; gap: 7px; }
+    .graph-node-id { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .graph-node-kind { margin-left: auto; flex-shrink: 0; font-size: 10px; color: #b6b2c5; }
+    .graph-node-meta { margin-top: 9px; color: #abb8c9; font-size: 10px; }
+    .graph-node-status { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .graph-node-status::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: #86a6da; }
+    .graph-node[data-status="in_progress"] .graph-node-status::before { background: #edba67; }
+    .graph-node[data-status="blocked"] .graph-node-status::before { background: #df8585; }
+    .graph-node[data-status="closed"] .graph-node-status::before { background: #83ba91; }
+    .graph-node-cycle { margin-left: auto; color: #edba67; }
+    .graph-direction { color: #bac8dd; font-size: 11px; white-space: nowrap; }
+    .graph-link.context-dim { opacity: .08; }
+    .graph-node.context-dim { opacity: .35; }
     .graph-footer { display: flex; flex-wrap: wrap; gap: 13px; border-top: 1px solid #30343d; background: #191c22; color: #8f9aaa; padding: 9px 16px; font-size: 10px; }
     .graph-legend-parent { color: #8faad1; }
     .graph-legend-blocks { color: #d8b780; }
@@ -186,6 +200,7 @@
     const columns = [{key:'open',title:'Открытые'},{key:'in_progress',title:'В работе'},{key:'paused',title:'Пауза'},{key:'closed',title:'Закрытые'}];
     const state = {projects:[],issues:[],byKey:new Map(),project:'all',graphProject:null,view:'board',treeCollapsed:new Set(),selected:null,loading:false,columnLimits:{open:200,in_progress:200,paused:200,closed:200}};
     const graphViews=new Map();
+    const graphSize={width:240,height:112,columnGap:128,rowGap:32,padding:72};
     let graphRuntime=null;
     const issueKey = issue => `${issue.project.slug}:${issue.id}`;
     const rootId = id => id.split('.')[0];
@@ -290,15 +305,20 @@
     }
     function buildGraph(issues) {
       const byId=new Map(issues.map(issue => [issue.id,issue]));
-      const edges=[], seen=new Set(), neighbors=new Map(issues.map(issue => [issue.id,[]]));
+      const compare=(a,b) => a.localeCompare(b,'en',{numeric:true});
+      const ids=[...byId.keys()].sort(compare);
+      const edges=[], seen=new Set(), neighbors=new Map(ids.map(id => [id,[]]));
+      const outgoing=new Map(ids.map(id => [id,[]])),incoming=new Map(ids.map(id => [id,[]]));
       function addEdge(from,to,type) {
-        if (!byId.has(from) || !byId.has(to) || from===to) return;
+        if (!byId.has(from) || !byId.has(to)) return;
         const key=`${type}:${from}:${to}`;
         if (seen.has(key)) return;
         seen.add(key);edges.push({from,to,type});
         neighbors.get(from).push(to);neighbors.get(to).push(from);
+        outgoing.get(from).push(to);incoming.get(to).push(from);
       }
-      for (const issue of issues) {
+      for (const id of ids) {
+        const issue=byId.get(id);
         const parent=parentOf(issue);
         if (parent) addEdge(parent,issue.id,'parent-child');
         for (const dep of issue.dependencies || []) {
@@ -308,37 +328,127 @@
         }
       }
       const components=[], visited=new Set();
-      for (const issue of issues) {
-        if (visited.has(issue.id)) continue;
-        const queue=[issue.id], component=[];visited.add(issue.id);
+      for (const id of ids) {
+        if (visited.has(id)) continue;
+        const queue=[id], component=[];visited.add(id);
         for (let index=0;index<queue.length;index++) {
           const id=queue[index];component.push(id);
           for (const next of neighbors.get(id)) if (!visited.has(next)) {visited.add(next);queue.push(next);}
         }
         components.push(component);
       }
-      components.sort((a,b) => b.length-a.length || a[0].localeCompare(b[0]));
-      const positions=new Map();
-      let rowX=90,rowY=90,rowHeight=0,stageWidth=0;
+      components.sort((a,b) => b.length-a.length || compare(a[0],b[0]));
+      const positions=new Map(), ranks=new Map(),cyclic=new Set(),groupById=new Map(),groups=[];
+      const stepY=graphSize.height+graphSize.rowGap,stepX=graphSize.width+graphSize.columnGap;
       for (const component of components) {
-        const root=component.find(id => byId.get(id).issue_type==='epic') || component[0];
-        const queue=[root], order=[], localSeen=new Set([root]);
-        for (let index=0;index<queue.length;index++) {
-          const id=queue[index];order.push(id);
-          for (const next of neighbors.get(id).sort()) if (!localSeen.has(next)) {localSeen.add(next);queue.push(next);}
+        // Collapse directed cycles before assigning levels. Iterative walks also handle deep epics.
+        const finished=[],walked=new Set();
+        for (const start of component) {
+          const stack=[[start,false]];
+          while (stack.length) {
+            const [id,exit]=stack.pop();
+            if (exit) {finished.push(id);continue;}
+            if (walked.has(id)) continue;
+            walked.add(id);stack.push([id,true]);
+            for (const next of outgoing.get(id)) if (!walked.has(next)) stack.push([next,false]);
+          }
         }
-        const local=order.map((id,index) => {
-          const angle=index*2.3999632297, radius=105*Math.sqrt(index);
-          return {id,x:Math.cos(angle)*radius,y:Math.sin(angle)*radius};
-        });
-        const minX=Math.min(...local.map(node => node.x)), maxX=Math.max(...local.map(node => node.x));
-        const minY=Math.min(...local.map(node => node.y)), maxY=Math.max(...local.map(node => node.y));
-        const width=maxX-minX+158, height=maxY-minY+54;
-        if (rowX>90 && rowX+width>2600) {rowX=90;rowY+=rowHeight+170;rowHeight=0;}
-        for (const node of local) positions.set(node.id,{x:rowX+node.x-minX,y:rowY+node.y-minY});
-        rowX+=width+170;rowHeight=Math.max(rowHeight,height);stageWidth=Math.max(stageWidth,rowX);
+        const clusters=[],clusterOf=new Map();
+        for (const start of finished.reverse()) {
+          if (clusterOf.has(start)) continue;
+          const index=clusters.length,members=[],stack=[start];clusterOf.set(start,index);
+          while (stack.length) {
+            const id=stack.pop();members.push(id);
+            for (const next of incoming.get(id)) if (!clusterOf.has(next)) {clusterOf.set(next,index);stack.push(next);}
+          }
+          clusters.push(members);
+          if (members.length>1 || outgoing.get(start).includes(start)) members.forEach(id => cyclic.add(id));
+        }
+        const links=clusters.map(() => new Set()),degree=clusters.map(() => 0),level=clusters.map(() => 0);
+        for (const id of component) for (const next of outgoing.get(id)) {
+          const from=clusterOf.get(id),to=clusterOf.get(next);
+          if (from!==to && !links[from].has(to)) {links[from].add(to);degree[to]++;}
+        }
+        const queue=degree.flatMap((value,index) => value===0 ? [index] : []);
+        for (let index=0;index<queue.length;index++) for (const next of links[queue[index]]) {
+          level[next]=Math.max(level[next],level[queue[index]]+1);
+          if (--degree[next]===0) queue.push(next);
+        }
+        const columns=Array.from({length:Math.max(...level)+1},() => []);
+        for (const id of component) {const rank=level[clusterOf.get(id)];ranks.set(id,rank);columns[rank].push(id);}
+
+        // Start with contiguous hierarchy branches, rather than an arbitrary list of task IDs.
+        const children=new Map(component.map(id => [id,[]])),hasParent=new Set();
+        for (const id of component) {
+          const parent=parentOf(byId.get(id));
+          if (children.has(parent) && parent!==id) {children.get(parent).push(id);hasParent.add(id);}
+        }
+        for (const list of children.values()) list.sort(compare);
+        const hints=new Map(),hintSeen=new Set();let leaf=0;
+        const roots=component.filter(id => !hasParent.has(id)).sort(compare);
+        for (const start of [...roots,...component.slice().sort(compare)]) {
+          if (hintSeen.has(start)) continue;
+          const stack=[[start,false]];
+          while (stack.length) {
+            const [id,exit]=stack.pop();
+            if (exit) {
+              const ys=children.get(id).filter(next => hints.has(next)).map(next => hints.get(next));
+              hints.set(id,ys.length ? (Math.min(...ys)+Math.max(...ys))/2 : leaf++*stepY);
+              continue;
+            }
+            if (hintSeen.has(id)) continue;
+            hintSeen.add(id);stack.push([id,true]);
+            for (const next of children.get(id).slice().reverse()) if (!hintSeen.has(next)) stack.push([next,false]);
+          }
+        }
+        const ys=new Map(hints);
+        for (const column of columns) column.sort((a,b) => hints.get(a)-hints.get(b) || compare(a,b));
+        // Pool adjacent rows when their preferred positions overlap, preserving their order.
+        function placeColumn(column,desired) {
+          const pools=[];
+          column.forEach((id,index) => {
+            pools.push({sum:desired(id)-index*stepY,count:1});
+            while (pools.length>1) {
+              const b=pools[pools.length-1],a=pools[pools.length-2];
+              if (a.sum/a.count<=b.sum/b.count) break;
+              pools.splice(-2,2,{sum:a.sum+b.sum,count:a.count+b.count});
+            }
+          });
+          let index=0;
+          for (const pool of pools) for (let n=0;n<pool.count;n++,index++) ys.set(column[index],Math.max(0,pool.sum/pool.count)+index*stepY);
+        }
+        for (const column of columns) placeColumn(column,id => hints.get(id));
+        for (let sweep=0;sweep<6;sweep++) {
+          const forward=sweep%2===0;
+          for (const column of forward ? columns : columns.slice().reverse()) {
+            const preferred=id => {
+              const adjacent=(forward ? incoming : outgoing).get(id).filter(next => ranks.get(next)!==ranks.get(id));
+              return adjacent.length ? adjacent.reduce((sum,next) => sum+ys.get(next),0)/adjacent.length : ys.get(id);
+            };
+            column.sort((a,b) => preferred(a)-preferred(b) || hints.get(a)-hints.get(b) || compare(a,b));
+            placeColumn(column,preferred);
+          }
+        }
+        const minY=Math.min(...component.map(id => ys.get(id)));
+        const local=new Map(component.map(id => [id,{x:(columns.length-1-ranks.get(id))*stepX,y:ys.get(id)-minY}]));
+        const routed=component.flatMap(id => outgoing.get(id).filter(next => ranks.get(next)!==ranks.get(id)+1)).length;
+        const top=routed ? 40+Math.min(routed,12)*12 : 0;
+        const group={local,top,width:(columns.length-1)*stepX+graphSize.width,height:Math.max(...[...local.values()].map(point => point.y))+graphSize.height+top};
+        groups.push(group);component.forEach(id => groupById.set(id,group));
       }
-      return {positions,edges,components:components.length,width:Math.max(400,stageWidth),height:Math.max(320,rowY+rowHeight+90)};
+      const lanes=new Map();
+      for (const edge of edges) if (ranks.get(edge.to)!==ranks.get(edge.from)+1) {
+        const group=groupById.get(edge.from),lane=lanes.get(group) || 0;
+        edge.lane=lane%12;lanes.set(group,lane+1);
+      }
+      let rowX=graphSize.padding,rowY=graphSize.padding,rowHeight=0,stageWidth=0;
+      for (const group of groups) {
+        if (rowX>graphSize.padding && rowX+group.width>2400) {rowX=graphSize.padding;rowY+=rowHeight+96;rowHeight=0;}
+        group.topY=rowY;group.bottomY=rowY+group.height;
+        for (const [id,point] of group.local) positions.set(id,{x:rowX+point.x,y:rowY+group.top+point.y});
+        rowX+=group.width+128;rowHeight=Math.max(rowHeight,group.height);stageWidth=Math.max(stageWidth,rowX);
+      }
+      return {positions,edges,ranks,cyclic,groupById,components:components.length,width:Math.max(400,stageWidth),height:Math.max(320,rowY+rowHeight+graphSize.padding)};
     }
     function graphSignature(issues) {
       return issues.map(issue => `${issue.id}:${parentOf(issue) || ''}:${(issue.dependencies || []).filter(dep => dep.type==='blocks' || dep.type==='supersedes').map(dep => `${dep.type}:${dep.depends_on_id}`).sort().join(',')}`).sort().join('|');
@@ -359,13 +469,13 @@
     function graphFit() {
       if (!graphRuntime) return;
       const {viewport,layout,view}=graphRuntime;
-      const points=[...layout.positions.values()];
-      const minX=points.length ? Math.min(...points.map(point => point.x))-70 : 0;
-      const minY=points.length ? Math.min(...points.map(point => point.y))-70 : 0;
-      const maxX=points.length ? Math.max(...points.map(point => point.x))+228 : layout.width;
-      const maxY=points.length ? Math.max(...points.map(point => point.y))+124 : layout.height;
+      const points=[...layout.positions.values()],links=layout.linkPoints || [];
+      const minX=points.length ? Math.min(...points.map(point => point.x),...links.map(point => point[0]))-40 : 0;
+      const minY=points.length ? Math.min(...points.map(point => point.y),...links.map(point => point[1]))-40 : 0;
+      const maxX=points.length ? Math.max(...points.map(point => point.x+graphSize.width),...links.map(point => point[0]))+40 : layout.width;
+      const maxY=points.length ? Math.max(...points.map(point => point.y+graphSize.height),...links.map(point => point[1]))+40 : layout.height;
       const width=maxX-minX,height=maxY-minY;
-      view.scale=Math.max(.02,Math.min(1.2,(viewport.clientWidth-40)/width,(viewport.clientHeight-40)/height));
+      view.scale=Math.max(.00001,Math.min(1.2,Math.max(1,viewport.clientWidth-40)/width,Math.max(1,viewport.clientHeight-40)/height));
       view.x=(viewport.clientWidth-width*view.scale)/2-minX*view.scale;
       view.y=(viewport.clientHeight-height*view.scale)/2-minY*view.scale;
       view.initialized=true;graphTransform();
@@ -374,7 +484,7 @@
       if (!graphRuntime) return;
       const {viewport,view}=graphRuntime, rect=viewport.getBoundingClientRect();
       const x=clientX-rect.left,y=clientY-rect.top, worldX=(x-view.x)/view.scale,worldY=(y-view.y)/view.scale;
-      view.scale=Math.max(.02,Math.min(2.5,view.scale*factor));
+      view.scale=Math.max(.00001,Math.min(2.5,view.scale*factor));
       view.x=x-worldX*view.scale;view.y=y-worldY*view.scale;graphTransform();
     }
     function graphFocusFirstMatch() {
@@ -385,20 +495,47 @@
       if (!issue) return;
       const position=layout.positions.get(issue.id);
       view.scale=Math.max(.8,view.scale);
-      view.x=viewport.clientWidth/2-(position.x+79)*view.scale;
-      view.y=viewport.clientHeight/2-(position.y+27)*view.scale;
+      view.x=viewport.clientWidth/2-(position.x+graphSize.width/2)*view.scale;
+      view.y=viewport.clientHeight/2-(position.y+graphSize.height/2)*view.scale;
       graphTransform();
+    }
+    function graphEdgePoints(layout,edge,index,groupTops) {
+      const from=layout.positions.get(edge.from),to=layout.positions.get(edge.to);
+      const start=[from.x,from.y+graphSize.height/2],end=[to.x+graphSize.width,to.y+graphSize.height/2];
+      const gap=start[0]-end[0];
+      if (gap>=40 && gap<=graphSize.columnGap+1) {
+        const middle=(start[0]+end[0])/2+(edge.type==='blocks' ? 18 : 0);
+        return [start,[middle,start[1]],[middle,end[1]],end];
+      }
+      // Long and cyclic links use the outside corridor, so they cannot cut through other cards.
+      const group=layout.groupById.get(edge.from);
+      const top=(groupTops?.get(group) ?? Math.min(...[...group.local.keys()].map(id => layout.positions.get(id).y)))-32-(edge.lane ?? index%12)*12;
+      return [start,[start[0]-24,start[1]],[start[0]-24,top],[end[0]+24,top],[end[0]+24,end[1]],end];
+    }
+    function graphRoundedPath(points) {
+      let path=`M ${points[0].join(' ')}`;
+      for (let index=1;index<points.length-1;index++) {
+        const before=points[index-1],corner=points[index],after=points[index+1];
+        const incoming=Math.hypot(corner[0]-before[0],corner[1]-before[1]),outgoing=Math.hypot(after[0]-corner[0],after[1]-corner[1]);
+        if (!incoming || !outgoing) {path+=` L ${corner.join(' ')}`;continue;}
+        const radius=Math.min(10,incoming/2,outgoing/2);
+        const entry=corner.map((value,axis) => value+(before[axis]-value)*radius/incoming);
+        const exit=corner.map((value,axis) => value+(after[axis]-value)*radius/outgoing);
+        path+=` L ${entry.join(' ')} Q ${corner.join(' ')} ${exit.join(' ')}`;
+      }
+      return `${path} L ${points[points.length-1].join(' ')}`;
     }
     function graphUpdateLines() {
       if (!graphRuntime) return;
       const {layout,lines}=graphRuntime;
-      for (const [line,edge] of lines) {
-        const from=layout.positions.get(edge.from),to=layout.positions.get(edge.to);
-        const dx=to.x-from.x,dy=to.y-from.y,length=Math.hypot(dx,dy) || 1;
-        line.setAttribute('x1',from.x+79+dx/length*72);
-        line.setAttribute('y1',from.y+27+dy/length*23);
-        line.setAttribute('x2',to.x+79-dx/length*72);
-        line.setAttribute('y2',to.y+27-dy/length*23);
+      const groupTops=new Map();layout.linkPoints=[];
+      for (const [id,point] of layout.positions) {
+        const group=layout.groupById.get(id);
+        groupTops.set(group,Math.min(groupTops.get(group) ?? Infinity,point.y));
+      }
+      for (const [index,[line,edge]] of lines.entries()) {
+        const points=graphEdgePoints(layout,edge,index,groupTops);
+        line.setAttribute('d',graphRoundedPath(points));layout.linkPoints.push(...points);
       }
     }
     function renderGraph(board) {
@@ -414,12 +551,13 @@
       const {layout}=view, query=$('search').value.trim().toLocaleLowerCase('ru-RU');
       const matches=new Set(project.issues.filter(issue => !query || [issue.id,issue.title].some(value => String(value || '').toLocaleLowerCase('ru-RU').includes(query))).map(issue => issue.id));
       const tabs=state.projects.map(item => `<button class="graph-project-tab ${item.slug===project.slug ? 'active' : ''}" data-graph-project="${escapeHtml(item.slug)}" type="button" aria-pressed="${item.slug===project.slug}">${escapeHtml(item.slug)} · ${item.issues.length}</button>`).join('');
-      const lines=layout.edges.map((edge,index) => `<line class="graph-link ${edge.type} ${query && !matches.has(edge.from) && !matches.has(edge.to) ? 'dim' : ''}" data-edge="${index}" ${edge.type==='blocks' ? 'marker-end="url(#graph-arrow)"' : ''}></line>`).join('');
+      const lines=layout.edges.map((edge,index) => `<path class="graph-link ${edge.type} ${query && !matches.has(edge.from) && !matches.has(edge.to) ? 'dim' : ''}" data-edge="${index}" marker-end="url(#graph-arrow-${edge.type})"></path>`).join('');
       const nodes=project.issues.map(issue => {
         const position=layout.positions.get(issue.id);
-        return `<div class="graph-node ${issue.issue_type==='epic' ? 'graph-epic' : ''} ${issue.status==='closed' ? 'closed' : ''} ${query ? matches.has(issue.id) ? 'match' : 'dim' : ''}" data-graph-node="${escapeHtml(issue.id)}" role="button" tabindex="0" aria-label="${escapeHtml(`${issue.id} ${issue.title}, ${statusNames[issue.status] || issue.status}`)}" title="${escapeHtml(issue.title)}" style="left:${position.x}px;top:${position.y}px"><span class="graph-node-id">${escapeHtml(issue.id)}</span><span class="graph-node-title">${escapeHtml(issue.title)}</span></div>`;
+        return `<div class="graph-node ${issue.issue_type==='epic' ? 'graph-epic' : ''} ${issue.status==='closed' ? 'closed' : ''} ${query ? matches.has(issue.id) ? 'match' : 'dim' : ''}" data-graph-node="${escapeHtml(issue.id)}" data-status="${escapeHtml(issue.status)}" role="button" tabindex="0" aria-label="${escapeHtml(`${issue.id} ${issue.title}, ${statusNames[issue.status] || issue.status}`)}" title="${escapeHtml(issue.title)}" style="left:${position.x}px;top:${position.y}px"><div class="graph-node-head"><span class="graph-node-id">${escapeHtml(issue.id)}</span><span class="graph-node-kind">${escapeHtml(typeNames[issue.issue_type] || 'Задача')}</span></div><span class="graph-node-title">${escapeHtml(issue.title)}</span><div class="graph-node-meta"><span class="graph-node-status">${escapeHtml(statusNames[issue.status] || issue.status)}</span><span>P${escapeHtml(issue.priority ?? '—')}</span>${layout.cyclic.has(issue.id) ? '<span class="graph-node-cycle" title="Цикл в связях задач">↻ цикл</span>' : ''}</div></div>`;
       }).join('');
-      board.innerHTML=`<div class="graph-toolbar"><div class="graph-project-tabs" role="group" aria-label="Проекты">${tabs}</div><div class="graph-tools"><button class="graph-tool" data-graph-action="zoom-out" type="button" aria-label="Уменьшить">−</button><button class="graph-tool" data-graph-action="zoom-in" type="button" aria-label="Увеличить">+</button><button class="graph-tool" data-graph-action="fit" type="button">Весь граф</button></div></div><div class="graph-viewport" id="graph-viewport" aria-label="Граф задач проекта ${escapeHtml(project.slug)}"><div class="graph-stage" id="graph-stage" style="width:${layout.width}px;height:${layout.height}px"><svg class="graph-links" width="${layout.width}" height="${layout.height}" aria-hidden="true"><defs><marker id="graph-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#d2a96b"></path></marker></defs>${lines}</svg>${nodes}</div></div><div class="graph-footer"><span>${project.issues.length} задач · ${layout.components} несвязанных групп${query ? ` · ${matches.size} найдено` : ''}</span><span class="graph-legend-epic">◆ эпик</span><span class="graph-legend-parent">— вложенность</span><span class="graph-legend-blocks">→ блокирует</span><span>Тяни узел — потомки следуют за ним · колесо меняет масштаб</span></div>`;
+      const markers=[['parent-child','#8faad1'],['blocks','#d2a96b'],['supersedes','#7699a1']].map(([type,color]) => `<marker id="graph-arrow-${type}" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="${color}"></path></marker>`).join('');
+      board.innerHTML=`<div class="graph-toolbar"><div class="graph-project-tabs" role="group" aria-label="Проекты">${tabs}</div><div class="graph-tools"><button class="graph-tool" data-graph-action="zoom-out" type="button" aria-label="Уменьшить">−</button><button class="graph-tool" data-graph-action="zoom-in" type="button" aria-label="Увеличить">+</button><button class="graph-tool" data-graph-action="layout" type="button" title="Заново выстроить задачи справа налево">Выровнять</button><button class="graph-tool" data-graph-action="fit" type="button">Весь граф</button></div></div><div class="graph-viewport" id="graph-viewport" aria-label="Граф задач проекта ${escapeHtml(project.slug)}"><div class="graph-stage" id="graph-stage" style="width:${layout.width}px;height:${layout.height}px"><svg class="graph-links" width="${layout.width}" height="${layout.height}" aria-hidden="true"><defs>${markers}</defs>${lines}</svg>${nodes}</div></div><div class="graph-footer"><span class="graph-direction">Подзадачи и зависимые ← Исходные задачи</span><span>${project.issues.length} задач · ${layout.components} несвязанных групп${query ? ` · ${matches.size} найдено` : ''}</span><span class="graph-legend-epic">◆ эпик</span><span class="graph-legend-parent">подзадача ← родитель</span><span class="graph-legend-blocks">зависимая ⇠ блокер</span><span>Наведи на задачу, чтобы выделить её связи</span>${layout.cyclic.size ? `<span>↻ ${layout.cyclic.size} задач в циклах</span>` : ''}${layout.edges.some(edge => edge.type==='supersedes') ? '<span>← заменяет</span>' : ''}</div>`;
       const viewport=$('graph-viewport'),stage=$('graph-stage');
       graphRuntime={project,viewport,stage,view,layout,lines:[...board.querySelectorAll('[data-edge]')].map(line => [line,layout.edges[Number(line.dataset.edge)]])};
       graphUpdateLines();
@@ -427,6 +565,7 @@
       board.querySelectorAll('[data-graph-project]').forEach(button => button.addEventListener('click',() => {state.graphProject=button.dataset.graphProject;render();}));
       board.querySelectorAll('[data-graph-action]').forEach(button => button.addEventListener('click',() => {
         if (button.dataset.graphAction==='fit') {graphFit();return;}
+        if (button.dataset.graphAction==='layout') {graphViews.delete(project.slug);render();return;}
         const rect=viewport.getBoundingClientRect();graphZoom(button.dataset.graphAction==='zoom-in' ? 1.25 : .8,rect.left+rect.width/2,rect.top+rect.height/2);
       }));
       viewport.addEventListener('wheel',event => {event.preventDefault();graphZoom(event.deltaY<0 ? 1.12 : 1/1.12,event.clientX,event.clientY);},{passive:false});
@@ -442,13 +581,25 @@
       viewport.addEventListener('pointerup',endPan);viewport.addEventListener('pointercancel',endPan);
       const graphNodes=new Map([...board.querySelectorAll('[data-graph-node]')].map(node => [node.dataset.graphNode,node]));
       const children=new Map();
+      const adjacent=new Map(project.issues.map(issue => [issue.id,new Set([issue.id])]));
       for (const edge of layout.edges) {
+        adjacent.get(edge.from).add(edge.to);adjacent.get(edge.to).add(edge.from);
         if (edge.type!=='parent-child') continue;
         if (!children.has(edge.from)) children.set(edge.from,[]);
         children.get(edge.from).push(edge.to);
       }
+      const graphLines=graphRuntime.lines;
+      function highlightConnections(id) {
+        const connected=adjacent.get(id);
+        graphNodes.forEach((element,key) => element.classList.toggle('context-dim',Boolean(connected && !connected.has(key))));
+        for (const [line,edge] of graphLines) line.classList.toggle('context-dim',Boolean(id && edge.from!==id && edge.to!==id));
+      }
       graphNodes.forEach(node => {
         const issue=project.issues.find(item => item.id===node.dataset.graphNode);
+        node.addEventListener('pointerenter',() => highlightConnections(issue.id));
+        node.addEventListener('pointerleave',() => highlightConnections(null));
+        node.addEventListener('focus',() => highlightConnections(issue.id));
+        node.addEventListener('blur',() => highlightConnections(null));
         let drag=null;
         node.addEventListener('pointerdown',event => {
           if (event.button!==0) return;
