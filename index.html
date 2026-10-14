@@ -343,6 +343,14 @@
     function graphSignature(issues) {
       return issues.map(issue => `${issue.id}:${parentOf(issue) || ''}:${(issue.dependencies || []).filter(dep => dep.type==='blocks' || dep.type==='supersedes').map(dep => `${dep.type}:${dep.depends_on_id}`).sort().join(',')}`).sort().join('|');
     }
+    function graphSubtreeIds(rootId,children) {
+      const ids=[rootId],visited=new Set(ids);
+      for (let index=0;index<ids.length;index++) {
+        const id=ids[index];
+        for (const child of children.get(id) || []) if (!visited.has(child)) {visited.add(child);ids.push(child);}
+      }
+      return ids;
+    }
     function graphTransform() {
       if (!graphRuntime) return;
       const {stage,view}=graphRuntime;
@@ -411,7 +419,7 @@
         const position=layout.positions.get(issue.id);
         return `<div class="graph-node ${issue.issue_type==='epic' ? 'graph-epic' : ''} ${issue.status==='closed' ? 'closed' : ''} ${query ? matches.has(issue.id) ? 'match' : 'dim' : ''}" data-graph-node="${escapeHtml(issue.id)}" role="button" tabindex="0" aria-label="${escapeHtml(`${issue.id} ${issue.title}, ${statusNames[issue.status] || issue.status}`)}" title="${escapeHtml(issue.title)}" style="left:${position.x}px;top:${position.y}px"><span class="graph-node-id">${escapeHtml(issue.id)}</span><span class="graph-node-title">${escapeHtml(issue.title)}</span></div>`;
       }).join('');
-      board.innerHTML=`<div class="graph-toolbar"><div class="graph-project-tabs" role="group" aria-label="Проекты">${tabs}</div><div class="graph-tools"><button class="graph-tool" data-graph-action="zoom-out" type="button" aria-label="Уменьшить">−</button><button class="graph-tool" data-graph-action="zoom-in" type="button" aria-label="Увеличить">+</button><button class="graph-tool" data-graph-action="fit" type="button">Весь граф</button></div></div><div class="graph-viewport" id="graph-viewport" aria-label="Граф задач проекта ${escapeHtml(project.slug)}"><div class="graph-stage" id="graph-stage" style="width:${layout.width}px;height:${layout.height}px"><svg class="graph-links" width="${layout.width}" height="${layout.height}" aria-hidden="true"><defs><marker id="graph-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#d2a96b"></path></marker></defs>${lines}</svg>${nodes}</div></div><div class="graph-footer"><span>${project.issues.length} задач · ${layout.components} несвязанных групп${query ? ` · ${matches.size} найдено` : ''}</span><span class="graph-legend-epic">◆ эпик</span><span class="graph-legend-parent">— вложенность</span><span class="graph-legend-blocks">→ блокирует</span><span>Тяни узел или поле · колесо меняет масштаб · Enter в поиске — к задаче</span></div>`;
+      board.innerHTML=`<div class="graph-toolbar"><div class="graph-project-tabs" role="group" aria-label="Проекты">${tabs}</div><div class="graph-tools"><button class="graph-tool" data-graph-action="zoom-out" type="button" aria-label="Уменьшить">−</button><button class="graph-tool" data-graph-action="zoom-in" type="button" aria-label="Увеличить">+</button><button class="graph-tool" data-graph-action="fit" type="button">Весь граф</button></div></div><div class="graph-viewport" id="graph-viewport" aria-label="Граф задач проекта ${escapeHtml(project.slug)}"><div class="graph-stage" id="graph-stage" style="width:${layout.width}px;height:${layout.height}px"><svg class="graph-links" width="${layout.width}" height="${layout.height}" aria-hidden="true"><defs><marker id="graph-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#d2a96b"></path></marker></defs>${lines}</svg>${nodes}</div></div><div class="graph-footer"><span>${project.issues.length} задач · ${layout.components} несвязанных групп${query ? ` · ${matches.size} найдено` : ''}</span><span class="graph-legend-epic">◆ эпик</span><span class="graph-legend-parent">— вложенность</span><span class="graph-legend-blocks">→ блокирует</span><span>Тяни узел — потомки следуют за ним · колесо меняет масштаб</span></div>`;
       const viewport=$('graph-viewport'),stage=$('graph-stage');
       graphRuntime={project,viewport,stage,view,layout,lines:[...board.querySelectorAll('[data-edge]')].map(line => [line,layout.edges[Number(line.dataset.edge)]])};
       graphUpdateLines();
@@ -432,14 +440,21 @@
       viewport.addEventListener('pointermove',event => {if (!pan) return;view.x=pan.viewX+event.clientX-pan.x;view.y=pan.viewY+event.clientY-pan.y;graphTransform();});
       const endPan=() => {pan=null;viewport.classList.remove('panning');};
       viewport.addEventListener('pointerup',endPan);viewport.addEventListener('pointercancel',endPan);
-      board.querySelectorAll('[data-graph-node]').forEach(node => {
+      const graphNodes=new Map([...board.querySelectorAll('[data-graph-node]')].map(node => [node.dataset.graphNode,node]));
+      const children=new Map();
+      for (const edge of layout.edges) {
+        if (edge.type!=='parent-child') continue;
+        if (!children.has(edge.from)) children.set(edge.from,[]);
+        children.get(edge.from).push(edge.to);
+      }
+      graphNodes.forEach(node => {
         const issue=project.issues.find(item => item.id===node.dataset.graphNode);
         let drag=null;
         node.addEventListener('pointerdown',event => {
           if (event.button!==0) return;
           event.stopPropagation();event.preventDefault();
-          const position=layout.positions.get(issue.id);
-          drag={x:event.clientX,y:event.clientY,nodeX:position.x,nodeY:position.y,moved:false};
+          const origins=graphSubtreeIds(issue.id,children).map(id => ({id,...layout.positions.get(id)}));
+          drag={x:event.clientX,y:event.clientY,origins,moved:false};
           node.setPointerCapture(event.pointerId);
         });
         node.addEventListener('pointermove',event => {
@@ -447,9 +462,12 @@
           const dx=event.clientX-drag.x,dy=event.clientY-drag.y;
           if (Math.hypot(dx,dy)>4) drag.moved=true;
           if (!drag.moved) return;
-          const position=layout.positions.get(issue.id);
-          position.x=drag.nodeX+dx/view.scale;position.y=drag.nodeY+dy/view.scale;
-          node.style.left=`${position.x}px`;node.style.top=`${position.y}px`;graphUpdateLines();
+          for (const origin of drag.origins) {
+            const position=layout.positions.get(origin.id),element=graphNodes.get(origin.id);
+            position.x=origin.x+dx/view.scale;position.y=origin.y+dy/view.scale;
+            element.style.left=`${position.x}px`;element.style.top=`${position.y}px`;
+          }
+          graphUpdateLines();
         });
         node.addEventListener('pointerup',() => {if (drag && !drag.moved) openDrawer(`${project.slug}:${issue.id}`);drag=null;});
         node.addEventListener('pointercancel',() => {drag=null;});
