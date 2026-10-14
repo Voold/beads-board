@@ -5,3 +5,4 @@ __pycache__/
 issues.jsonl
 *.db
 *.sqlite*
+projects.local.txt

@@ -2,6 +2,7 @@
 """Локальный просмотр Beads без команд изменения задач."""
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -19,6 +20,8 @@ HERE = Path(__file__).resolve().parent
 HTML = HERE / "index.html"
 BEADS_HOME = Path(os.environ.get("BEADS_HOME", Path.home() / "beads")).expanduser()
 BD_BIN = os.environ.get("BD_BIN") or shutil.which("bd") or "/opt/homebrew/bin/bd"
+LOCAL_PROJECTS = HERE / "projects.local.txt"
+CLI_PROJECTS = ()
 ISSUE_FIELDS = (
     "id",
     "title",
@@ -65,9 +68,12 @@ def read_snapshot(slug):
     return issues, datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat()
 
 
-def read_live(project_dir):
+def read_live(project_dir, beads_dir=None):
     env = os.environ.copy()
-    env["BEADS_DIR"] = str(project_dir / ".beads")
+    if beads_dir:
+        env["BEADS_DIR"] = str(beads_dir)
+    else:
+        env.pop("BEADS_DIR", None)
     env["DOLT_DISABLE_EVENT_FLUSH"] = "1"
     result = subprocess.run(
         [BD_BIN, "--readonly", "list", "--all", "--json", "--limit", "0"],
@@ -84,35 +90,80 @@ def read_live(project_dir):
     return [normalize_issue(issue) for issue in issues]
 
 
-def load_project(config_path):
-    slug = config_path.parent.name
-    config = project_config(config_path)
+def configured_paths():
+    paths = list(CLI_PROJECTS)
+    try:
+        lines = LOCAL_PROJECTS.read_text(encoding="utf-8").splitlines()
+    except FileNotFoundError:
+        lines = []
+    for line in lines:
+        value = line.strip()
+        if value and not value.startswith("#"):
+            path = Path(value).expanduser()
+            paths.append((LOCAL_PROJECTS.parent / path).resolve() if not path.is_absolute() else path.resolve())
+    return paths
+
+
+def project_sources():
+    sources = []
+    seen_roots = set()
+    used_slugs = set()
+    for config_path in sorted((BEADS_HOME / "projects").glob("*/project.conf")):
+        config = project_config(config_path)
+        slug = config_path.parent.name
+        root = config.get("root", "")
+        sources.append({"slug": slug, "root": root, "workdir": config_path.parent, "beads_dir": config_path.parent / ".beads", "snapshot_slug": slug, "prefix": config.get("prefix", "")})
+        used_slugs.add(slug)
+        if root:
+            seen_roots.add(Path(root).expanduser().resolve())
+    for configured in configured_paths():
+        path = configured.expanduser().resolve()
+        workdir = path.parent if path.name == ".beads" else path
+        if workdir in seen_roots:
+            continue
+        seen_roots.add(workdir)
+        slug = workdir.name or "project"
+        if slug in used_slugs:
+            slug += "-" + hashlib.sha1(str(workdir).encode()).hexdigest()[:6]
+        used_slugs.add(slug)
+        sources.append({"slug": slug, "root": str(workdir), "workdir": workdir, "beads_dir": path if path.name == ".beads" else None, "snapshot_slug": None, "prefix": ""})
+    return sources
+
+
+def load_project(source):
     project = {
-        "slug": slug,
-        "root": config.get("root", ""),
-        "prefix": config.get("prefix", ""),
+        "slug": source["slug"],
+        "root": source["root"],
+        "prefix": source["prefix"],
         "issues": [],
         "source": "live",
         "updated_at": now_iso(),
         "error": None,
     }
     try:
-        project["issues"] = read_live(config_path.parent)
+        workdir = source["workdir"]
+        if not (workdir / ".beads").exists():
+            raise FileNotFoundError(f"В каталоге {workdir} нет .beads")
+        project["issues"] = read_live(workdir, source["beads_dir"])
     except (OSError, subprocess.SubprocessError, ValueError, json.JSONDecodeError) as live_error:
-        try:
-            project["issues"], project["updated_at"] = read_snapshot(slug)
-            project["source"] = "snapshot"
-            project["error"] = f"Beads недоступен: {live_error}"
-        except (OSError, ValueError, json.JSONDecodeError) as snapshot_error:
+        if source["snapshot_slug"] is None:
             project["source"] = "error"
-            project["error"] = f"Не удалось прочитать Beads и снимок: {snapshot_error}"
+            project["error"] = f"Не удалось прочитать Beads: {live_error}"
+        else:
+            try:
+                project["issues"], project["updated_at"] = read_snapshot(source["snapshot_slug"])
+                project["source"] = "snapshot"
+                project["error"] = f"Beads недоступен: {live_error}"
+            except (OSError, ValueError, json.JSONDecodeError) as snapshot_error:
+                project["source"] = "error"
+                project["error"] = f"Не удалось прочитать Beads и снимок: {snapshot_error}"
     return project
 
 
 def load_projects():
-    configs = sorted((BEADS_HOME / "projects").glob("*/project.conf"))
-    with ThreadPoolExecutor(max_workers=min(4, max(1, len(configs)))) as executor:
-        projects = list(executor.map(load_project, configs))
+    sources = project_sources()
+    with ThreadPoolExecutor(max_workers=min(4, max(1, len(sources)))) as executor:
+        projects = list(executor.map(load_project, sources))
     return {"fetched_at": now_iso(), "projects": projects}
 
 
@@ -154,10 +205,13 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+    global CLI_PROJECTS
     parser = argparse.ArgumentParser(description="Локальный read-only интерфейс Beads")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--no-browser", action="store_true")
+    parser.add_argument("--project", action="append", default=[], metavar="PATH", help="папка проекта Beads; можно указать несколько раз")
     args = parser.parse_args()
+    CLI_PROJECTS = tuple(Path(path).expanduser().resolve() for path in args.project)
     try:
         server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
     except OSError as error:

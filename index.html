@@ -222,7 +222,7 @@
       return groups;
     }
     function renderProjects() {
-      $('projects').innerHTML='<div class="eyebrow">Проекты · всего задач</div>' + [['all','Все проекты',state.issues.length],...state.projects.map(project => [project.slug,project.slug,project.issues.length])].map(([slug,name,count]) => `<button class="project ${state.project === slug ? 'active' : ''}" data-project="${escapeHtml(slug)}" title="${escapeHtml(name)} · ${count} задач" type="button"><span class="project-name">${escapeHtml(name)}</span><span class="project-count">${count}</span></button>`).join('');
+      $('projects').innerHTML='<div class="eyebrow">Проекты · всего задач</div>' + [['all','Все проекты',state.issues.length,'Все проекты'],...state.projects.map(project => [project.slug,project.slug,project.issues.length,project.root])].map(([slug,name,count,root]) => `<button class="project ${state.project === slug ? 'active' : ''}" data-project="${escapeHtml(slug)}" title="${escapeHtml(root || name)} · ${count} задач" type="button"><span class="project-name">${escapeHtml(name)}</span><span class="project-count">${count}</span></button>`).join('');
       $('projects').querySelectorAll('[data-project]').forEach(button => button.addEventListener('click', () => {state.project=button.dataset.project;closeDrawer();render();}));
     }
     function taskCard(issue,nested=false) {
@@ -394,7 +394,7 @@
       }
     }
     function renderGraph(board) {
-      if (!state.projects.length) {board.innerHTML='<div class="empty graph-empty">Пока нет проектов Beads.</div>';graphRuntime=null;return;}
+      if (!state.projects.length) {board.innerHTML='<div class="empty graph-empty">Проекты не найдены. Укажи папки через --project или projects.local.txt.</div>';graphRuntime=null;return;}
       if (!state.projects.some(project => project.slug===state.graphProject)) state.graphProject=state.project!=='all' && state.projects.some(project => project.slug===state.project) ? state.project : state.projects[0].slug;
       const project=state.projects.find(item => item.slug===state.graphProject);
       const signature=graphSignature(project.issues);
@@ -461,7 +461,7 @@
       const scrollLeft=board.scrollLeft, scrollTop=board.scrollTop, columnScrolls=new Map([...board.querySelectorAll('[data-column]')].map(column => [column.dataset.column,column.querySelector('.column-body').scrollTop]));
       const graphProject=state.projects.find(item => item.slug===state.graphProject) || state.projects[0];
       $('title').textContent=state.view==='graph' ? graphProject?.slug || 'Граф задач' : project ? project.slug : 'Все проекты';
-      $('summary').textContent=state.view==='graph' ? graphProject?.root || 'Проекты Beads' : project ? project.root : state.view==='tree' ? `${state.projects.length} проектов из ~/beads · вложенность и блокирующие зависимости` : `${state.projects.length} проектов из ~/beads · задачи по дате последнего обновления`;
+      $('summary').textContent=!state.projects.length ? 'Укажи папки через --project или projects.local.txt' : state.view==='graph' ? graphProject?.root || 'Проекты Beads' : project ? project.root : state.view==='tree' ? `${state.projects.length} проектов Beads · вложенность и блокирующие зависимости` : `${state.projects.length} проектов Beads · задачи по дате последнего обновления`;
       renderProjects();
       document.querySelectorAll('[data-view]').forEach(button => {const active=button.dataset.view===state.view;button.classList.toggle('active',active);if (active) button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
       $('layout').classList.toggle('graph-mode',state.view==='graph');
