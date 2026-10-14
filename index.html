@@ -108,6 +108,41 @@
     .tree-dep:hover { filter: brightness(1.15); }
     .tree-children { margin: 0 0 0 15px; }
     .tree-empty { max-width: 940px; }
+    .layout.graph-mode { display: block; }
+    .layout.graph-mode .main { height: 100%; }
+    .layout.graph-mode .projects { display: none; }
+    .layout.graph-mode .legend { display: none; }
+    .board.graph-view { display: flex; flex-direction: column; align-items: stretch; gap: 0; overflow: hidden; padding: 0; }
+    .graph-toolbar { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-bottom: 1px solid #30343d; background: #191c22; }
+    .graph-project-tabs { display: flex; gap: 5px; flex: 1; min-width: 0; overflow-x: auto; }
+    .graph-project-tab { flex: 0 0 auto; border: 1px solid #3a414d; border-radius: 7px; background: #252b34; color: #aeb8c7; padding: 7px 10px; font-size: 11px; }
+    .graph-project-tab.active { border-color: #6e89b8; background: #31415a; color: #edf2ff; }
+    .graph-tools { display: flex; gap: 5px; flex: 0 0 auto; }
+    .graph-tool { border: 1px solid #3a414d; border-radius: 7px; background: #252b34; color: #cbd5e4; padding: 7px 10px; font-size: 12px; }
+    .graph-tool:hover { background: #303a49; }
+    .graph-viewport { position: relative; flex: 1; min-height: 320px; overflow: hidden; cursor: grab; touch-action: none; background-color: #171b22; background-image: radial-gradient(#3c4551 1px, transparent 1px); background-size: 24px 24px; }
+    .graph-viewport.panning { cursor: grabbing; }
+    .graph-stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+    .graph-links { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+    .graph-link.parent-child { stroke: #6b81a3; stroke-width: 1.7; }
+    .graph-link.blocks { stroke: #d2a96b; stroke-width: 2; }
+    .graph-link.supersedes { stroke: #7699a1; stroke-width: 1.7; stroke-dasharray: 5 5; }
+    .graph-link.dim { opacity: .13; }
+    .graph-node { position: absolute; width: 158px; min-height: 54px; border: 1px solid #637995; border-radius: 10px; background: #283443; color: #e5ebf4; padding: 8px 10px; cursor: grab; touch-action: none; user-select: none; box-shadow: 0 5px 17px #0004; }
+    .graph-node:active { cursor: grabbing; }
+    .graph-node.graph-epic { border-color: #ad89d4; background: #392d48; box-shadow: 0 0 17px #ae8bd72c; }
+    .graph-node.closed { border-color: #50705b; background: #26372e; }
+    .graph-node.dim { opacity: .24; }
+    .graph-node.match { box-shadow: 0 0 0 2px #d0b778, 0 0 22px #d0b77855; }
+    .graph-node:focus-visible { outline: 2px solid #c7d9ff; outline-offset: 3px; }
+    .graph-node-id { font-size: 10px; font-weight: 740; color: #b9cbed; }
+    .graph-node.graph-epic .graph-node-id { color: #e1c6ff; }
+    .graph-node-title { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-top: 3px; font-size: 11px; font-weight: 600; }
+    .graph-footer { display: flex; flex-wrap: wrap; gap: 13px; border-top: 1px solid #30343d; background: #191c22; color: #8f9aaa; padding: 9px 16px; font-size: 10px; }
+    .graph-legend-parent { color: #8faad1; }
+    .graph-legend-blocks { color: #d8b780; }
+    .graph-legend-epic { color: #d0adeb; }
+    .graph-empty { flex: 1; }
     .backdrop { position: fixed; inset: 0; background: #07090ca8; display: none; z-index: 10; }
     .backdrop.show { display: block; }
     .drawer { position: fixed; top: 0; right: 0; height: 100vh; width: min(440px, 100vw); overflow: auto; background: #1b1f26; border-left: 1px solid #3b414c; padding: 23px 25px; box-shadow: -12px 0 45px #0006; z-index: 11; display: none; }
@@ -131,17 +166,17 @@
     .source-warning { color: #e3c58a; border: 1px solid #6b5838; border-radius: 8px; background: #30291d; padding: 10px; font-size: 11px; line-height: 1.5; margin-top: 16px; overflow-wrap: anywhere; }
     .toast { position: fixed; right: 20px; bottom: 20px; padding: 10px 14px; border-radius: 8px; color: #fff; background: #415b86; font-size: 12px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 20; }
     .toast.show { opacity: 1; }
-    @media (max-width: 760px) { .top { min-height: 62px; height: auto; flex-wrap: wrap; padding: 9px 14px; gap: 8px; } .tag { display: none; } .view-tabs { order: 3; width: 100%; } .view-tab { flex: 1; } .sync { max-width: 145px; } .layout { display: block; height: auto; } .projects { display: flex; padding: 7px; overflow-x: auto; border-right: 0; border-bottom: 1px solid #2a2e36; } .projects .eyebrow { display: none; } .project { min-width: 145px; width: auto; } .main { min-height: calc(100vh - 110px); } .toolbar { display: block; padding: 18px 16px 14px; } .controls { margin: 15px 0 0; justify-content: space-between; } .search { width: 55vw; } .board { padding: 14px; } .column { flex: 0 0 290px; min-width: 290px; } .tree-epic { padding: 11px; } .tree-children { margin-left: 8px; } .tree-list { padding-left: 9px; } }
+    @media (max-width: 760px) { .top { min-height: 62px; height: auto; flex-wrap: wrap; padding: 9px 14px; gap: 8px; } .tag { display: none; } .view-tabs { order: 3; width: 100%; } .view-tab { flex: 1; } .sync { max-width: 145px; } .layout { display: block; height: auto; } .projects { display: flex; padding: 7px; overflow-x: auto; border-right: 0; border-bottom: 1px solid #2a2e36; } .projects .eyebrow { display: none; } .project { min-width: 145px; width: auto; } .main { min-height: calc(100vh - 110px); } .toolbar { display: block; padding: 18px 16px 14px; } .controls { margin: 15px 0 0; justify-content: space-between; } .search { width: 55vw; } .board { padding: 14px; } .column { flex: 0 0 290px; min-width: 290px; } .tree-epic { padding: 11px; } .tree-children { margin-left: 8px; } .tree-list { padding-left: 9px; } .graph-toolbar { flex-wrap: wrap; } .graph-project-tabs { flex-basis: 100%; order: 2; } .graph-tools { margin-left: auto; } .board.graph-view { min-height: 560px; } }
   </style>
 </head>
 <body>
-  <header class="top"><div class="logo">Beads</div><div class="tag">Локальная доска задач</div><nav class="view-tabs" aria-label="Режим просмотра"><button class="view-tab active" data-view="board" type="button" aria-current="page">Доска</button><button class="view-tab" data-view="tree" type="button">Дерево эпиков</button></nav><div class="top-right"><div class="sync" id="sync">Загружаю…</div><button class="refresh" id="refresh" type="button">Обновить</button></div></header>
-  <div class="layout">
+  <header class="top"><div class="logo">Beads</div><div class="tag">Локальная доска задач</div><nav class="view-tabs" aria-label="Режим просмотра"><button class="view-tab active" data-view="board" type="button" aria-current="page">Доска</button><button class="view-tab" data-view="tree" type="button">Дерево эпиков</button><button class="view-tab" data-view="graph" type="button">Граф задач</button></nav><div class="top-right"><div class="sync" id="sync">Загружаю…</div><button class="refresh" id="refresh" type="button">Обновить</button></div></header>
+  <div class="layout" id="layout">
     <aside class="projects" id="projects" aria-label="Проекты"></aside>
     <main class="main"><div class="toolbar"><div><h1 id="title">Все проекты</h1><p class="summary" id="summary">Загружаю задачи</p><div class="legend"><span class="epic-mark">◆ Эпик</span><span class="parent-mark">▣ Родительская задача</span><span class="task-mark">□ Задача · ↳ Подзадача</span></div></div><div class="controls"><input class="search" id="search" type="search" placeholder="Поиск по задачам" aria-label="Поиск по задачам"></div></div><div class="board" id="board"><div class="empty">Читаю проекты Beads…</div></div></main>
   </div>
   <div class="backdrop" id="backdrop"></div><aside class="drawer" id="drawer" aria-label="Подробности задачи"></aside><div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script id="snapshot-data" type="application/json">{"fetched_at":"2026-10-14T12:00:00Z","projects":[{"slug":"demo","root":"Демо проект","prefix":"DEMO","source":"demo","updated_at":"2026-10-14T12:00:00Z","error":"Это вымышленные задачи. Для своих задач запусти start.command.","issues":[{"id":"DEMO-1","title":"Запустить проект","description":"Пример эпика с подзадачами.","acceptance_criteria":"Открыть локальную доску.","status":"in_progress","priority":2,"issue_type":"epic","assignee":null,"updated_at":"2026-10-14T12:00:00Z","closed_at":null,"close_reason":null,"parent":null,"dependencies":[]},{"id":"DEMO-1.1","title":"Подготовить окружение","description":"Проверить Python 3 и Beads CLI.","acceptance_criteria":null,"status":"closed","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-13T10:00:00Z","closed_at":"2026-10-13T10:00:00Z","close_reason":"Окружение готово.","parent":"DEMO-1","dependencies":[{"issue_id":"DEMO-1.1","depends_on_id":"DEMO-1","type":"parent-child"}]},{"id":"DEMO-1.2","title":"Открыть доску","description":"Запустить start.command или python3 server.py.","acceptance_criteria":null,"status":"in_progress","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-14T11:00:00Z","closed_at":null,"close_reason":null,"parent":"DEMO-1","dependencies":[{"issue_id":"DEMO-1.2","depends_on_id":"DEMO-1","type":"parent-child"},{"issue_id":"DEMO-1.2","depends_on_id":"DEMO-1.1","type":"blocks"},{"issue_id":"DEMO-1.2","depends_on_id":"DEMO-2","type":"blocks"}]},{"id":"DEMO-2","title":"Проверить команды","description":"Кнопки копируют промпты и не изменяют Beads.","acceptance_criteria":null,"status":"open","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-12T09:00:00Z","closed_at":null,"close_reason":null,"parent":null,"dependencies":[]},{"id":"DEMO-3","title":"Изучить закрытые задачи","description":"Пример завершённой задачи.","acceptance_criteria":null,"status":"closed","priority":3,"issue_type":"task","assignee":null,"updated_at":"2026-10-11T18:00:00Z","closed_at":"2026-10-11T18:00:00Z","close_reason":"Пример результата.","parent":null,"dependencies":[]},{"id":"DEMO-1.2.1","title":"Проверить живые данные","description":"Пример вложенной подзадачи.","acceptance_criteria":null,"status":"open","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-14T10:30:00Z","closed_at":null,"close_reason":null,"parent":"DEMO-1.2","dependencies":[{"issue_id":"DEMO-1.2.1","depends_on_id":"DEMO-1.2","type":"parent-child"}]}]}]}</script>
+  <script id="snapshot-data" type="application/json">{"fetched_at":"2026-10-14T12:00:00Z","projects":[{"slug":"demo","root":"Демо проект","prefix":"DEMO","source":"demo","updated_at":"2026-10-14T12:00:00Z","error":"Это вымышленные задачи. Для своих задач запусти start.command.","issues":[{"id":"DEMO-1","title":"Запустить проект","description":"Пример эпика с подзадачами.","acceptance_criteria":"Открыть локальную доску.","status":"in_progress","priority":2,"issue_type":"epic","assignee":null,"updated_at":"2026-10-14T12:00:00Z","closed_at":null,"close_reason":null,"parent":null,"dependencies":[]},{"id":"DEMO-1.1","title":"Подготовить окружение","description":"Проверить Python 3 и Beads CLI.","acceptance_criteria":null,"status":"closed","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-13T10:00:00Z","closed_at":"2026-10-13T10:00:00Z","close_reason":"Окружение готово.","parent":"DEMO-1","dependencies":[{"issue_id":"DEMO-1.1","depends_on_id":"DEMO-1","type":"parent-child"}]},{"id":"DEMO-1.2","title":"Открыть доску","description":"Запустить start.command или python3 server.py.","acceptance_criteria":null,"status":"in_progress","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-14T11:00:00Z","closed_at":null,"close_reason":null,"parent":"DEMO-1","dependencies":[{"issue_id":"DEMO-1.2","depends_on_id":"DEMO-1","type":"parent-child"},{"issue_id":"DEMO-1.2","depends_on_id":"DEMO-1.1","type":"blocks"},{"issue_id":"DEMO-1.2","depends_on_id":"DEMO-2","type":"blocks"}]},{"id":"DEMO-2","title":"Проверить команды","description":"Кнопки копируют промпты и не изменяют Beads.","acceptance_criteria":null,"status":"open","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-12T09:00:00Z","closed_at":null,"close_reason":null,"parent":null,"dependencies":[]},{"id":"DEMO-3","title":"Изучить закрытые задачи","description":"Пример завершённой задачи.","acceptance_criteria":null,"status":"closed","priority":3,"issue_type":"task","assignee":null,"updated_at":"2026-10-11T18:00:00Z","closed_at":"2026-10-11T18:00:00Z","close_reason":"Пример результата.","parent":null,"dependencies":[]},{"id":"DEMO-1.2.1","title":"Проверить живые данные","description":"Пример вложенной подзадачи.","acceptance_criteria":null,"status":"open","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-14T10:30:00Z","closed_at":null,"close_reason":null,"parent":"DEMO-1.2","dependencies":[{"issue_id":"DEMO-1.2.1","depends_on_id":"DEMO-1.2","type":"parent-child"}]}]},{"slug":"sample-app","root":"Второй демо проект","prefix":"SAMPLE","source":"demo","updated_at":"2026-10-14T12:00:00Z","error":"Это вымышленные задачи. Для своих задач запусти start.command.","issues":[{"id":"SAMPLE-1","title":"Собрать пример приложения","description":"Второй пример проекта для вкладок графа.","acceptance_criteria":null,"status":"open","priority":2,"issue_type":"epic","assignee":null,"updated_at":"2026-10-14T09:00:00Z","closed_at":null,"close_reason":null,"parent":null,"dependencies":[]},{"id":"SAMPLE-1.1","title":"Нарисовать экран","description":null,"acceptance_criteria":null,"status":"in_progress","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-14T10:00:00Z","closed_at":null,"close_reason":null,"parent":"SAMPLE-1","dependencies":[{"issue_id":"SAMPLE-1.1","depends_on_id":"SAMPLE-1","type":"parent-child"}]},{"id":"SAMPLE-1.2","title":"Проверить сценарий","description":null,"acceptance_criteria":null,"status":"open","priority":2,"issue_type":"task","assignee":null,"updated_at":"2026-10-14T11:00:00Z","closed_at":null,"close_reason":null,"parent":"SAMPLE-1","dependencies":[{"issue_id":"SAMPLE-1.2","depends_on_id":"SAMPLE-1","type":"parent-child"},{"issue_id":"SAMPLE-1.2","depends_on_id":"SAMPLE-1.1","type":"blocks"}]},{"id":"SAMPLE-2","title":"Отдельная задача","description":"Несвязанная часть графа.","acceptance_criteria":null,"status":"closed","priority":3,"issue_type":"task","assignee":null,"updated_at":"2026-10-13T12:00:00Z","closed_at":"2026-10-13T12:00:00Z","close_reason":"Готово.","parent":null,"dependencies":[]}]}]}</script>
   <script>
     const $ = id => document.getElementById(id);
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]);
@@ -149,7 +184,9 @@
     const statusNames = {open:'Открыта',in_progress:'В работе',blocked:'Заблокирована',deferred:'Отложена',closed:'Закрыта'};
     const typeNames = {epic:'Эпик',feature:'Фича',bug:'Баг',task:'Задача',decision:'Решение'};
     const columns = [{key:'open',title:'Открытые'},{key:'in_progress',title:'В работе'},{key:'paused',title:'Пауза'},{key:'closed',title:'Закрытые'}];
-    const state = {projects:[],issues:[],byKey:new Map(),project:'all',view:'board',treeCollapsed:new Set(),selected:null,loading:false,columnLimits:{open:200,in_progress:200,paused:200,closed:200}};
+    const state = {projects:[],issues:[],byKey:new Map(),project:'all',graphProject:null,view:'board',treeCollapsed:new Set(),selected:null,loading:false,columnLimits:{open:200,in_progress:200,paused:200,closed:200}};
+    const graphViews=new Map();
+    let graphRuntime=null;
     const issueKey = issue => `${issue.project.slug}:${issue.id}`;
     const rootId = id => id.split('.')[0];
     const localDay = value => {const d=new Date(value);return Number.isNaN(d.getTime()) ? 'unknown' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
@@ -251,14 +288,187 @@
       }).join('');
       return `<p class="tree-intro">Вложенность показывает связи «родитель → подзадача». Метка «Зависит от» показывает блокирующие задачи; зелёная метка означает, что блокер закрыт.</p>${cards || '<div class="empty tree-empty">Эпиков по текущему фильтру нет.</div>'}`;
     }
+    function buildGraph(issues) {
+      const byId=new Map(issues.map(issue => [issue.id,issue]));
+      const edges=[], seen=new Set(), neighbors=new Map(issues.map(issue => [issue.id,[]]));
+      function addEdge(from,to,type) {
+        if (!byId.has(from) || !byId.has(to) || from===to) return;
+        const key=`${type}:${from}:${to}`;
+        if (seen.has(key)) return;
+        seen.add(key);edges.push({from,to,type});
+        neighbors.get(from).push(to);neighbors.get(to).push(from);
+      }
+      for (const issue of issues) {
+        const parent=parentOf(issue);
+        if (parent) addEdge(parent,issue.id,'parent-child');
+        for (const dep of issue.dependencies || []) {
+          if (dep.issue_id!==issue.id) continue;
+          if (dep.type==='blocks') addEdge(dep.depends_on_id,issue.id,'blocks');
+          if (dep.type==='supersedes') addEdge(issue.id,dep.depends_on_id,'supersedes');
+        }
+      }
+      const components=[], visited=new Set();
+      for (const issue of issues) {
+        if (visited.has(issue.id)) continue;
+        const queue=[issue.id], component=[];visited.add(issue.id);
+        for (let index=0;index<queue.length;index++) {
+          const id=queue[index];component.push(id);
+          for (const next of neighbors.get(id)) if (!visited.has(next)) {visited.add(next);queue.push(next);}
+        }
+        components.push(component);
+      }
+      components.sort((a,b) => b.length-a.length || a[0].localeCompare(b[0]));
+      const positions=new Map();
+      let rowX=90,rowY=90,rowHeight=0,stageWidth=0;
+      for (const component of components) {
+        const root=component.find(id => byId.get(id).issue_type==='epic') || component[0];
+        const queue=[root], order=[], localSeen=new Set([root]);
+        for (let index=0;index<queue.length;index++) {
+          const id=queue[index];order.push(id);
+          for (const next of neighbors.get(id).sort()) if (!localSeen.has(next)) {localSeen.add(next);queue.push(next);}
+        }
+        const local=order.map((id,index) => {
+          const angle=index*2.3999632297, radius=105*Math.sqrt(index);
+          return {id,x:Math.cos(angle)*radius,y:Math.sin(angle)*radius};
+        });
+        const minX=Math.min(...local.map(node => node.x)), maxX=Math.max(...local.map(node => node.x));
+        const minY=Math.min(...local.map(node => node.y)), maxY=Math.max(...local.map(node => node.y));
+        const width=maxX-minX+158, height=maxY-minY+54;
+        if (rowX>90 && rowX+width>2600) {rowX=90;rowY+=rowHeight+170;rowHeight=0;}
+        for (const node of local) positions.set(node.id,{x:rowX+node.x-minX,y:rowY+node.y-minY});
+        rowX+=width+170;rowHeight=Math.max(rowHeight,height);stageWidth=Math.max(stageWidth,rowX);
+      }
+      return {positions,edges,components:components.length,width:Math.max(400,stageWidth),height:Math.max(320,rowY+rowHeight+90)};
+    }
+    function graphSignature(issues) {
+      return issues.map(issue => `${issue.id}:${parentOf(issue) || ''}:${(issue.dependencies || []).filter(dep => dep.type==='blocks' || dep.type==='supersedes').map(dep => `${dep.type}:${dep.depends_on_id}`).sort().join(',')}`).sort().join('|');
+    }
+    function graphTransform() {
+      if (!graphRuntime) return;
+      const {stage,view}=graphRuntime;
+      stage.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.scale})`;
+    }
+    function graphFit() {
+      if (!graphRuntime) return;
+      const {viewport,layout,view}=graphRuntime;
+      const points=[...layout.positions.values()];
+      const minX=points.length ? Math.min(...points.map(point => point.x))-70 : 0;
+      const minY=points.length ? Math.min(...points.map(point => point.y))-70 : 0;
+      const maxX=points.length ? Math.max(...points.map(point => point.x))+228 : layout.width;
+      const maxY=points.length ? Math.max(...points.map(point => point.y))+124 : layout.height;
+      const width=maxX-minX,height=maxY-minY;
+      view.scale=Math.max(.02,Math.min(1.2,(viewport.clientWidth-40)/width,(viewport.clientHeight-40)/height));
+      view.x=(viewport.clientWidth-width*view.scale)/2-minX*view.scale;
+      view.y=(viewport.clientHeight-height*view.scale)/2-minY*view.scale;
+      view.initialized=true;graphTransform();
+    }
+    function graphZoom(factor,clientX,clientY) {
+      if (!graphRuntime) return;
+      const {viewport,view}=graphRuntime, rect=viewport.getBoundingClientRect();
+      const x=clientX-rect.left,y=clientY-rect.top, worldX=(x-view.x)/view.scale,worldY=(y-view.y)/view.scale;
+      view.scale=Math.max(.02,Math.min(2.5,view.scale*factor));
+      view.x=x-worldX*view.scale;view.y=y-worldY*view.scale;graphTransform();
+    }
+    function graphFocusFirstMatch() {
+      if (!graphRuntime) return;
+      const {project,layout,viewport,view}=graphRuntime,query=$('search').value.trim().toLocaleLowerCase('ru-RU');
+      if (!query) return;
+      const issue=project.issues.find(item => [item.id,item.title].some(value => String(value || '').toLocaleLowerCase('ru-RU').includes(query)));
+      if (!issue) return;
+      const position=layout.positions.get(issue.id);
+      view.scale=Math.max(.8,view.scale);
+      view.x=viewport.clientWidth/2-(position.x+79)*view.scale;
+      view.y=viewport.clientHeight/2-(position.y+27)*view.scale;
+      graphTransform();
+    }
+    function graphUpdateLines() {
+      if (!graphRuntime) return;
+      const {layout,lines}=graphRuntime;
+      for (const [line,edge] of lines) {
+        const from=layout.positions.get(edge.from),to=layout.positions.get(edge.to);
+        const dx=to.x-from.x,dy=to.y-from.y,length=Math.hypot(dx,dy) || 1;
+        line.setAttribute('x1',from.x+79+dx/length*72);
+        line.setAttribute('y1',from.y+27+dy/length*23);
+        line.setAttribute('x2',to.x+79-dx/length*72);
+        line.setAttribute('y2',to.y+27-dy/length*23);
+      }
+    }
+    function renderGraph(board) {
+      if (!state.projects.length) {board.innerHTML='<div class="empty graph-empty">Пока нет проектов Beads.</div>';graphRuntime=null;return;}
+      if (!state.projects.some(project => project.slug===state.graphProject)) state.graphProject=state.project!=='all' && state.projects.some(project => project.slug===state.project) ? state.project : state.projects[0].slug;
+      const project=state.projects.find(item => item.slug===state.graphProject);
+      const signature=graphSignature(project.issues);
+      let view=graphViews.get(project.slug);
+      if (!view || view.signature!==signature) {
+        view={signature,layout:buildGraph(project.issues),x:0,y:0,scale:1,initialized:false};
+        graphViews.set(project.slug,view);
+      }
+      const {layout}=view, query=$('search').value.trim().toLocaleLowerCase('ru-RU');
+      const matches=new Set(project.issues.filter(issue => !query || [issue.id,issue.title].some(value => String(value || '').toLocaleLowerCase('ru-RU').includes(query))).map(issue => issue.id));
+      const tabs=state.projects.map(item => `<button class="graph-project-tab ${item.slug===project.slug ? 'active' : ''}" data-graph-project="${escapeHtml(item.slug)}" type="button" aria-pressed="${item.slug===project.slug}">${escapeHtml(item.slug)} · ${item.issues.length}</button>`).join('');
+      const lines=layout.edges.map((edge,index) => `<line class="graph-link ${edge.type} ${query && !matches.has(edge.from) && !matches.has(edge.to) ? 'dim' : ''}" data-edge="${index}" ${edge.type==='blocks' ? 'marker-end="url(#graph-arrow)"' : ''}></line>`).join('');
+      const nodes=project.issues.map(issue => {
+        const position=layout.positions.get(issue.id);
+        return `<div class="graph-node ${issue.issue_type==='epic' ? 'graph-epic' : ''} ${issue.status==='closed' ? 'closed' : ''} ${query ? matches.has(issue.id) ? 'match' : 'dim' : ''}" data-graph-node="${escapeHtml(issue.id)}" role="button" tabindex="0" aria-label="${escapeHtml(`${issue.id} ${issue.title}, ${statusNames[issue.status] || issue.status}`)}" title="${escapeHtml(issue.title)}" style="left:${position.x}px;top:${position.y}px"><span class="graph-node-id">${escapeHtml(issue.id)}</span><span class="graph-node-title">${escapeHtml(issue.title)}</span></div>`;
+      }).join('');
+      board.innerHTML=`<div class="graph-toolbar"><div class="graph-project-tabs" role="group" aria-label="Проекты">${tabs}</div><div class="graph-tools"><button class="graph-tool" data-graph-action="zoom-out" type="button" aria-label="Уменьшить">−</button><button class="graph-tool" data-graph-action="zoom-in" type="button" aria-label="Увеличить">+</button><button class="graph-tool" data-graph-action="fit" type="button">Весь граф</button></div></div><div class="graph-viewport" id="graph-viewport" aria-label="Граф задач проекта ${escapeHtml(project.slug)}"><div class="graph-stage" id="graph-stage" style="width:${layout.width}px;height:${layout.height}px"><svg class="graph-links" width="${layout.width}" height="${layout.height}" aria-hidden="true"><defs><marker id="graph-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#d2a96b"></path></marker></defs>${lines}</svg>${nodes}</div></div><div class="graph-footer"><span>${project.issues.length} задач · ${layout.components} несвязанных групп${query ? ` · ${matches.size} найдено` : ''}</span><span class="graph-legend-epic">◆ эпик</span><span class="graph-legend-parent">— вложенность</span><span class="graph-legend-blocks">→ блокирует</span><span>Тяни узел или поле · колесо меняет масштаб · Enter в поиске — к задаче</span></div>`;
+      const viewport=$('graph-viewport'),stage=$('graph-stage');
+      graphRuntime={project,viewport,stage,view,layout,lines:[...board.querySelectorAll('[data-edge]')].map(line => [line,layout.edges[Number(line.dataset.edge)]])};
+      graphUpdateLines();
+      if (view.initialized) graphTransform();else requestAnimationFrame(() => {if (graphRuntime?.view===view) graphFit();});
+      board.querySelectorAll('[data-graph-project]').forEach(button => button.addEventListener('click',() => {state.graphProject=button.dataset.graphProject;render();}));
+      board.querySelectorAll('[data-graph-action]').forEach(button => button.addEventListener('click',() => {
+        if (button.dataset.graphAction==='fit') {graphFit();return;}
+        const rect=viewport.getBoundingClientRect();graphZoom(button.dataset.graphAction==='zoom-in' ? 1.25 : .8,rect.left+rect.width/2,rect.top+rect.height/2);
+      }));
+      viewport.addEventListener('wheel',event => {event.preventDefault();graphZoom(event.deltaY<0 ? 1.12 : 1/1.12,event.clientX,event.clientY);},{passive:false});
+      let pan=null;
+      viewport.addEventListener('pointerdown',event => {
+        if (event.button!==0) return;
+        if (event.target.closest('.graph-node')) return;
+        pan={x:event.clientX,y:event.clientY,viewX:view.x,viewY:view.y};
+        viewport.setPointerCapture(event.pointerId);viewport.classList.add('panning');
+      });
+      viewport.addEventListener('pointermove',event => {if (!pan) return;view.x=pan.viewX+event.clientX-pan.x;view.y=pan.viewY+event.clientY-pan.y;graphTransform();});
+      const endPan=() => {pan=null;viewport.classList.remove('panning');};
+      viewport.addEventListener('pointerup',endPan);viewport.addEventListener('pointercancel',endPan);
+      board.querySelectorAll('[data-graph-node]').forEach(node => {
+        const issue=project.issues.find(item => item.id===node.dataset.graphNode);
+        let drag=null;
+        node.addEventListener('pointerdown',event => {
+          if (event.button!==0) return;
+          event.stopPropagation();event.preventDefault();
+          const position=layout.positions.get(issue.id);
+          drag={x:event.clientX,y:event.clientY,nodeX:position.x,nodeY:position.y,moved:false};
+          node.setPointerCapture(event.pointerId);
+        });
+        node.addEventListener('pointermove',event => {
+          if (!drag) return;
+          const dx=event.clientX-drag.x,dy=event.clientY-drag.y;
+          if (Math.hypot(dx,dy)>4) drag.moved=true;
+          if (!drag.moved) return;
+          const position=layout.positions.get(issue.id);
+          position.x=drag.nodeX+dx/view.scale;position.y=drag.nodeY+dy/view.scale;
+          node.style.left=`${position.x}px`;node.style.top=`${position.y}px`;graphUpdateLines();
+        });
+        node.addEventListener('pointerup',() => {if (drag && !drag.moved) openDrawer(`${project.slug}:${issue.id}`);drag=null;});
+        node.addEventListener('pointercancel',() => {drag=null;});
+        node.addEventListener('keydown',event => {if (event.key==='Enter' || event.key===' ') {event.preventDefault();openDrawer(`${project.slug}:${issue.id}`);}});
+      });
+    }
     function render() {
       const project=state.projects.find(item => item.slug === state.project), groups=boardGroups(), board=$('board');
       const scrollLeft=board.scrollLeft, scrollTop=board.scrollTop, columnScrolls=new Map([...board.querySelectorAll('[data-column]')].map(column => [column.dataset.column,column.querySelector('.column-body').scrollTop]));
-      $('title').textContent=project ? project.slug : 'Все проекты';
-      $('summary').textContent=project ? project.root : state.view==='tree' ? `${state.projects.length} проектов из ~/beads · вложенность и блокирующие зависимости` : `${state.projects.length} проектов из ~/beads · задачи по дате последнего обновления`;
+      const graphProject=state.projects.find(item => item.slug===state.graphProject) || state.projects[0];
+      $('title').textContent=state.view==='graph' ? graphProject?.slug || 'Граф задач' : project ? project.slug : 'Все проекты';
+      $('summary').textContent=state.view==='graph' ? graphProject?.root || 'Проекты Beads' : project ? project.root : state.view==='tree' ? `${state.projects.length} проектов из ~/beads · вложенность и блокирующие зависимости` : `${state.projects.length} проектов из ~/beads · задачи по дате последнего обновления`;
       renderProjects();
       document.querySelectorAll('[data-view]').forEach(button => {const active=button.dataset.view===state.view;button.classList.toggle('active',active);if (active) button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
+      $('layout').classList.toggle('graph-mode',state.view==='graph');
       board.classList.toggle('tree-view',state.view==='tree');
+      board.classList.toggle('graph-view',state.view==='graph');
+      if (state.view==='graph') {renderGraph(board);return;}
+      graphRuntime=null;
       if (state.view==='tree') {
         board.innerHTML=renderTree();
         board.scrollLeft=0;
@@ -325,8 +535,9 @@
       } finally {state.loading=false;$('refresh').disabled=false;}
     }
     $('refresh').addEventListener('click',refresh);
-    document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => {state.view=button.dataset.view;render();}));
+    document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => {state.view=button.dataset.view;if (state.view==='graph' && !state.graphProject && state.project!=='all') state.graphProject=state.project;render();}));
     $('search').addEventListener('input',render);
+    $('search').addEventListener('keydown',event => {if (event.key==='Enter' && state.view==='graph') graphFocusFirstMatch();});
     $('backdrop').addEventListener('click',closeDrawer);
     document.addEventListener('keydown',event => {if (event.key==='Escape') closeDrawer();});
     if (location.protocol==='file:') {
