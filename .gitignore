@@ -1,0 +1,7 @@
+.DS_Store
+__pycache__/
+*.pyc
+.beads/
+issues.jsonl
+*.db
+*.sqlite*
